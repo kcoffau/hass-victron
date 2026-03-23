@@ -138,6 +138,13 @@ The voltage profile to use in order to calculate the voltage boundaries (i.e. 4s
 The AC voltage for a single phase in your region (currently supported is US: 120v and EU: 230v)
 This setting is used in combination with AC current to automatically calculate the max wattage for applicable wattage settings.
 
+### Adanced Modbus TCP Settings
+#### TCP Keep Alive (Default: OFF)
+Keepalive attempts to maintain a constant Modbus connection between Cerbo and HomeAssistant.  This is experimental.
+
+#### Modbus TCP Retries (Default: 1)
+When a connection fails, this is the amount of times the plugin will attempt to reconnect before failing and marking entity as unavailable.  Warning: Do not set this too high, as it will deplay marking the entity as unavailable or just hide another connectivity issue.
+
 # Resources
 The following links can be helpful resources:
 - [setting up modbusTCP on the gx device](https://www.victronenergy.com/live/ccgx:modbustcp_faq)
