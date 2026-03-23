@@ -15,7 +15,9 @@
                     "host": "Host",
                     "port": "Port",
                     "interval": "update interval in (s)",
-                    "advanced": "Enables write support and allows setting write limits"
+                    "advanced": "Enables write support and allows setting write limits",
+                    "tcp_keepalive": "Enable TCP keepalive (default: off)",
+                    "modbus_retries": "Modbus retries after transport error (default: 1)"
                 }
             },
             "advanced": {
@@ -49,6 +51,15 @@
                     "number_of_phases": "The phase configuration of your system",
                     "use_sliders": "Use stepped sliders for writeable number entities",
                     "advanced": "switch to read only mode if unchecked (when submitted)"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Advanced: Modbus TCP Settings",
+                        "data": {
+                            "tcp_keepalive": "Enable TCP keepalive (default: off)",
+                            "modbus_retries": "Modbus retries after transport error (default: 1)"
+                        }
+                    }
                 }
             },
             "init_read": {
@@ -56,6 +67,15 @@
                     "rescan": "Rescan available devices. This will rescan all available devices",
                     "interval": "Update interval in (s)",
                     "advanced": "Enable write support"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Advanced: Modbus TCP Settings",
+                        "data": {
+                            "tcp_keepalive": "Enable TCP keepalive (default: off)",
+                            "modbus_retries": "Modbus retries after transport error (default: 1)"
+                        }
+                    }
                 }
             },
             "advanced": {

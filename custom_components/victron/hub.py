@@ -1,7 +1,9 @@
 """Support for Victron Energy devices."""
 
 from collections import OrderedDict
+import errno
 import logging
+import socket
 import threading
 
 from packaging import version
@@ -11,6 +13,7 @@ from pymodbus.client import ModbusTcpClient
 from homeassistant.exceptions import HomeAssistantError
 
 from .const import (
+    DEFAULT_MODBUS_RETRIES,
     INT16,
     INT32,
     INT64,
@@ -24,14 +27,47 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# TCP / transport failures where closing the socket and connecting again is appropriate.
+_RECOVERABLE_ERRNOS = frozenset(
+    {
+        errno.EPIPE,
+        errno.ECONNRESET,
+        errno.ECONNABORTED,
+        errno.ENOTCONN,
+        errno.ETIMEDOUT,
+        errno.EHOSTUNREACH,
+        errno.ENETUNREACH,
+    }
+)
+
+
+def _is_recoverable_transport_error(exc: Exception) -> bool:
+    """Return True if the exception may be resolved by reconnecting the Modbus client."""
+    if isinstance(exc, TimeoutError):
+        return True
+    if isinstance(exc, (BrokenPipeError, ConnectionResetError)):
+        return True
+    if isinstance(exc, OSError):
+        return exc.errno in _RECOVERABLE_ERRNOS
+    return False
+
 
 class VictronHub:
     """Victron Hub."""
 
-    def __init__(self, host: str, port: int) -> None:
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        *,
+        tcp_keepalive: bool = False,
+        modbus_retries: int = DEFAULT_MODBUS_RETRIES,
+    ) -> None:
         """Initialize."""
         self.host = host
         self.port = port
+        self._keepalive = tcp_keepalive
+        self._modbus_retries = max(0, int(modbus_retries))
         self._client = ModbusTcpClient(host=self.host, port=self.port)
         self._lock = threading.Lock()
 
@@ -73,30 +109,104 @@ class VictronHub:
             )
         return raw
 
+    def _apply_tcp_keepalive(self) -> None:
+        """Enable SO_KEEPALIVE on the underlying TCP socket. Caller must hold _lock."""
+        if not self._keepalive:
+            return
+        sock = getattr(self._client, "socket", None)
+        if sock is None:
+            return
+        try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        except OSError as err:
+            _LOGGER.warning("Could not enable TCP keepalive: %s", err)
+
     def connect(self):
         """Connect to the Modbus TCP server."""
-        return self._client.connect()
+        with self._lock:
+            ok = self._client.connect()
+            if ok:
+                self._apply_tcp_keepalive()
+            return ok
 
     def disconnect(self):
         """Disconnect from the Modbus TCP server."""
-        if self._client.is_socket_open():
-            return self._client.close()
+        with self._lock:
+            if self._client.is_socket_open():
+                return self._client.close()
         return None
+
+    def _reconnect(self) -> None:
+        """Close the socket and open a new Modbus TCP session. Caller must hold _lock."""
+        try:
+            self._client.close()
+        except OSError:
+            pass
+        if not self._client.connect():
+            raise ConnectionError(
+                f"Could not reconnect to Modbus TCP at {self.host}:{self.port}"
+            )
+        self._apply_tcp_keepalive()
+
+    def _ensure_connected(self) -> None:
+        """Connect if the client has no open socket. Caller must hold _lock."""
+        if not self._client.is_socket_open():
+            if not self._client.connect():
+                raise ConnectionError(
+                    f"Could not connect to Modbus TCP at {self.host}:{self.port}"
+                )
+            self._apply_tcp_keepalive()
+
+    def _transport_attempts(self) -> int:
+        """Number of Modbus operations to attempt (first try + retries)."""
+        return self._modbus_retries + 1
 
     def write_register(self, unit, address, value):
         """Write a register."""
         slave = int(unit) if unit else 1
-        return self._client.write_register(
-            address=address, value=value, device_id=slave
-        )
+        max_attempts = self._transport_attempts()
+        with self._lock:
+            for attempt in range(max_attempts):
+                try:
+                    self._ensure_connected()
+                    return self._client.write_register(
+                        address=address, value=value, device_id=slave
+                    )
+                except Exception as err:
+                    if (
+                        attempt < max_attempts - 1
+                        and _is_recoverable_transport_error(err)
+                    ):
+                        _LOGGER.warning(
+                            "Modbus write failed (%s), reconnecting", err
+                        )
+                        self._reconnect()
+                        continue
+                    raise
 
     def read_holding_registers(self, unit, address, count):
         """Read holding registers."""
         slave = int(unit) if unit else 1
-        _LOGGER.info("Reading unit %s address %s count %s", unit, address, count)
-        return self._client.read_holding_registers(
-            address=address, count=count, device_id=slave
-        )
+        max_attempts = self._transport_attempts()
+        _LOGGER.debug("Reading unit %s address %s count %s", unit, address, count)
+        with self._lock:
+            for attempt in range(max_attempts):
+                try:
+                    self._ensure_connected()
+                    return self._client.read_holding_registers(
+                        address=address, count=count, device_id=slave
+                    )
+                except Exception as err:
+                    if (
+                        attempt < max_attempts - 1
+                        and _is_recoverable_transport_error(err)
+                    ):
+                        _LOGGER.warning(
+                            "Modbus read failed (%s), reconnecting", err
+                        )
+                        self._reconnect()
+                        continue
+                    raise
 
     def calculate_register_count(self, registerInfoDict: OrderedDict):
         """Calculate the number of registers to read."""
@@ -146,8 +256,8 @@ class VictronHub:
                         )
                     else:
                         working_registers.append(key)
-                except HomeAssistantError as e:
-                    _LOGGER.error(e)
+                except (HomeAssistantError, OSError) as e:
+                    _LOGGER.error("Device scan read failed: %s", e)
 
             if len(working_registers) > 0:
                 valid_devices[unit] = working_registers

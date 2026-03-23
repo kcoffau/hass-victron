@@ -10,7 +10,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.data_entry_flow import FlowResult
+from homeassistant.data_entry_flow import FlowResult, section
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.selector import (
     SelectOptionDict,
@@ -27,13 +27,17 @@ from .const import (
     CONF_DC_SYSTEM_VOLTAGE,
     CONF_HOST,
     CONF_INTERVAL,
+    CONF_MODBUS_RETRIES,
     CONF_NUMBER_OF_PHASES,
     CONF_PORT,
+    CONF_TCP_KEEPALIVE,
     CONF_USE_SLIDERS,
     DC_VOLTAGES,
+    DEFAULT_MODBUS_RETRIES,
     DOMAIN,
     PHASE_CONFIGURATIONS,
     SCAN_REGISTERS,
+    SECTION_MODBUS_TCP,
     RegisterInfo,
 )
 from .hub import VictronHub
@@ -42,12 +46,28 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_RESCAN = "rescan"
 
+
+def _flatten_modbus_tcp_section(user_input: dict[str, Any]) -> None:
+    """Promote Modbus TCP section fields to top-level keys used in config entry options."""
+    if SECTION_MODBUS_TCP not in user_input:
+        return
+    nested = user_input.pop(SECTION_MODBUS_TCP)
+    user_input[CONF_TCP_KEEPALIVE] = nested.get(CONF_TCP_KEEPALIVE, False)
+    user_input[CONF_MODBUS_RETRIES] = max(
+        0,
+        min(10, int(nested.get(CONF_MODBUS_RETRIES, DEFAULT_MODBUS_RETRIES))),
+    )
+
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
         vol.Required(CONF_PORT, default=502): int,
         vol.Required(CONF_INTERVAL, default=30): int,
         vol.Optional(CONF_ADVANCED_OPTIONS, default=False): bool,
+        vol.Optional(CONF_TCP_KEEPALIVE, default=False): bool,
+        vol.Optional(CONF_MODBUS_RETRIES, default=DEFAULT_MODBUS_RETRIES): vol.All(
+            vol.Coerce(int), vol.Range(min=0, max=10)
+        ),
     }
 )
 
@@ -119,12 +139,19 @@ class VictronFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             self.port = user_input[CONF_PORT]
             self.interval = user_input[CONF_INTERVAL]
             self.advanced_options = user_input[CONF_ADVANCED_OPTIONS]
+            self.tcp_keepalive = user_input.get(CONF_TCP_KEEPALIVE, False)
+            self.modbus_retries = user_input.get(
+                CONF_MODBUS_RETRIES, DEFAULT_MODBUS_RETRIES
+            )
             return await self.async_step_advanced()
 
         errors = {}
         already_configured = False
 
         user_input[CONF_INTERVAL] = max(user_input[CONF_INTERVAL], 1)
+        user_input[CONF_MODBUS_RETRIES] = max(
+            0, min(10, int(user_input.get(CONF_MODBUS_RETRIES, DEFAULT_MODBUS_RETRIES)))
+        )
 
         try:
             # not yet working
@@ -175,6 +202,10 @@ class VictronFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 )
                 options[CONF_DC_SYSTEM_VOLTAGE] = int(
                     user_input[CONF_DC_SYSTEM_VOLTAGE]
+                )
+                options[CONF_TCP_KEEPALIVE] = getattr(self, "tcp_keepalive", False)
+                options[CONF_MODBUS_RETRIES] = getattr(
+                    self, "modbus_retries", DEFAULT_MODBUS_RETRIES
                 )
 
                 try:
@@ -313,6 +344,8 @@ class VictronOptionFlowHandler(config_entries.OptionsFlow):
     async def async_step_init_read(self, user_input=None):
         """Handle write support and limit settings if requested."""
         config = dict(self.config_entry.options)
+        if user_input is not None:
+            _flatten_modbus_tcp_section(user_input)
         # combine dictionaries with priority given to user_input
         if user_input[CONF_RESCAN]:
             info = await validate_input(self.hass, config)
@@ -337,6 +370,8 @@ class VictronOptionFlowHandler(config_entries.OptionsFlow):
     async def async_step_init_write(self, user_input=None):
         """Handle write support and limit settings if requested."""
         config = dict(self.config_entry.options)
+        if user_input is not None:
+            _flatten_modbus_tcp_section(user_input)
         # remove temp options =
         if user_input[CONF_RESCAN]:
             info = await validate_input(self.hass, config)
@@ -369,8 +404,19 @@ class VictronOptionFlowHandler(config_entries.OptionsFlow):
         config = dict(self.config_entry.options)
 
         if user_input is not None:
+            _flatten_modbus_tcp_section(user_input)
             if user_input[CONF_INTERVAL] not in (None, ""):
-                config[CONF_INTERVAL] = user_input[CONF_INTERVAL]
+                config[CONF_INTERVAL] = max(int(user_input[CONF_INTERVAL]), 1)
+            config[CONF_TCP_KEEPALIVE] = user_input.get(CONF_TCP_KEEPALIVE, False)
+            config[CONF_MODBUS_RETRIES] = max(
+                0,
+                min(
+                    10,
+                    int(
+                        user_input.get(CONF_MODBUS_RETRIES, DEFAULT_MODBUS_RETRIES)
+                    ),
+                ),
+            )
 
             try:
                 if user_input[CONF_RESCAN]:
@@ -403,16 +449,34 @@ class VictronOptionFlowHandler(config_entries.OptionsFlow):
 
     def init_read_form(self, errors: dict):
         """Handle read support and limit settings if requested."""
+        opts = self.config_entry.options
         return self.async_show_form(
             step_id="init_read",
             errors=errors,
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_INTERVAL, default=self.config_entry.options[CONF_INTERVAL]
+                        CONF_INTERVAL, default=opts[CONF_INTERVAL]
                     ): vol.All(vol.Coerce(int)),
                     vol.Optional(CONF_RESCAN, default=False): bool,
                     vol.Optional(CONF_ADVANCED_OPTIONS, default=False): bool,
+                    vol.Required(SECTION_MODBUS_TCP): section(
+                        vol.Schema(
+                            {
+                                vol.Optional(
+                                    CONF_TCP_KEEPALIVE,
+                                    default=opts.get(CONF_TCP_KEEPALIVE, False),
+                                ): bool,
+                                vol.Required(
+                                    CONF_MODBUS_RETRIES,
+                                    default=opts.get(
+                                        CONF_MODBUS_RETRIES, DEFAULT_MODBUS_RETRIES
+                                    ),
+                                ): vol.All(vol.Coerce(int), vol.Range(min=0, max=10)),
+                            }
+                        ),
+                        {"collapsed": False},
+                    ),
                 },
             ),
         )
@@ -494,6 +558,23 @@ class VictronOptionFlowHandler(config_entries.OptionsFlow):
                     ): bool,
                     vol.Optional(CONF_RESCAN, default=False): bool,
                     vol.Optional(CONF_ADVANCED_OPTIONS, default=True): bool,
+                    vol.Required(SECTION_MODBUS_TCP): section(
+                        vol.Schema(
+                            {
+                                vol.Optional(
+                                    CONF_TCP_KEEPALIVE,
+                                    default=config.get(CONF_TCP_KEEPALIVE, False),
+                                ): bool,
+                                vol.Required(
+                                    CONF_MODBUS_RETRIES,
+                                    default=config.get(
+                                        CONF_MODBUS_RETRIES, DEFAULT_MODBUS_RETRIES
+                                    ),
+                                ): vol.All(vol.Coerce(int), vol.Range(min=0, max=10)),
+                            }
+                        ),
+                        {"collapsed": False},
+                    ),
                 },
             ),
         )

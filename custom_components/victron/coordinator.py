@@ -18,6 +18,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
+    DEFAULT_MODBUS_RETRIES,
     DOMAIN,
     INT16,
     INT32,
@@ -46,13 +47,21 @@ class victronEnergyDeviceUpdateCoordinator(DataUpdateCoordinator):
         port: str,
         decodeInfo: OrderedDict,
         interval: int,
+        *,
+        tcp_keepalive: bool = False,
+        modbus_retries: int = DEFAULT_MODBUS_RETRIES,
     ) -> None:
         """Initialize Update Coordinator."""
 
         super().__init__(
             hass, _LOGGER, name=DOMAIN, update_interval=timedelta(seconds=interval)
         )
-        self.api = VictronHub(host, port)
+        self.api = VictronHub(
+            host,
+            port,
+            tcp_keepalive=tcp_keepalive,
+            modbus_retries=modbus_retries,
+        )
         self.api.connect()
         self.decodeInfo = decodeInfo
         self.interval = interval
@@ -184,7 +193,7 @@ class victronEnergyDeviceUpdateCoordinator(DataUpdateCoordinator):
                 self.api_update, unit, registerData
             )
 
-        except HomeAssistantError as e:
+        except (HomeAssistantError, OSError) as e:
             raise UpdateFailed("Fetching registers failed") from e
 
     def write_register(self, unit, address, value):
@@ -199,12 +208,10 @@ class victronEnergyDeviceUpdateCoordinator(DataUpdateCoordinator):
 
     def api_write(self, unit, address, value):
         """Write to the api."""
-        # recycle connection
         return self.api.write_register(unit=unit, address=address, value=value)
 
     def api_update(self, unit, registerInfo):
         """Update the api."""
-        # recycle connection
         return self.api.read_holding_registers(
             unit=unit,
             address=self.api.get_first_register_id(registerInfo),

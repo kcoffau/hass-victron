@@ -15,7 +15,9 @@
                     "host": "Host",
                     "port": "Porta",
                     "interval": "Intervallo di aggiornamento in (s)",
-                    "advanced": "Abilita il supporto in scrittura e consente di impostare limiti di scrittura"
+                    "advanced": "Abilita il supporto in scrittura e consente di impostare limiti di scrittura",
+                    "tcp_keepalive": "Abilita keepalive TCP (predefinito: disattivato)",
+                    "modbus_retries": "Tentativi Modbus dopo errore di trasporto (predefinito: 1)"
                 }
             },
             "advanced": {
@@ -49,6 +51,15 @@
                     "number_of_phases": "La configurazione delle fasi del tuo sistema",
                     "use_sliders": "Utilizza cursori a passi per entità numeriche scrivibili",
                     "advanced": "Passa alla modalità sola lettura se deselezionato (al momento dell'invio)"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Avanzate: impostazioni Modbus TCP",
+                        "data": {
+                            "tcp_keepalive": "Abilita keepalive TCP (predefinito: disattivato)",
+                            "modbus_retries": "Tentativi Modbus dopo errore di trasporto (predefinito: 1)"
+                        }
+                    }
                 }
             },
             "init_read": {
@@ -56,6 +67,15 @@
                     "rescan": "Esegui nuovamente la scansione dei dispositivi disponibili. Questo eseguirà la scansione di tutti i dispositivi disponibili",
                     "interval": "Intervallo di aggiornamento in (s)",
                     "advanced": "Abilita il supporto in scrittura"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Avanzate: impostazioni Modbus TCP",
+                        "data": {
+                            "tcp_keepalive": "Abilita keepalive TCP (predefinito: disattivato)",
+                            "modbus_retries": "Tentativi Modbus dopo errore di trasporto (predefinito: 1)"
+                        }
+                    }
                 }
             },
             "advanced": {

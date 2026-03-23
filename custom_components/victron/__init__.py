@@ -6,7 +6,16 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_HOST, CONF_INTERVAL, CONF_PORT, DOMAIN, SCAN_REGISTERS
+from .const import (
+    CONF_HOST,
+    CONF_INTERVAL,
+    CONF_MODBUS_RETRIES,
+    CONF_PORT,
+    CONF_TCP_KEEPALIVE,
+    DEFAULT_MODBUS_RETRIES,
+    DOMAIN,
+    SCAN_REGISTERS,
+)
 from .coordinator import victronEnergyDeviceUpdateCoordinator as Coordinator
 
 PLATFORMS: list[Platform] = [
@@ -34,6 +43,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         config_entry.options[CONF_PORT],
         config_entry.data[SCAN_REGISTERS],
         config_entry.options[CONF_INTERVAL],
+        tcp_keepalive=bool(config_entry.options.get(CONF_TCP_KEEPALIVE, False)),
+        modbus_retries=int(
+            config_entry.options.get(CONF_MODBUS_RETRIES, DEFAULT_MODBUS_RETRIES)
+        ),
     )
     # try:
     #     await coordinator.async_config_entry_first_refresh()

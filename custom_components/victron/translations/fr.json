@@ -15,7 +15,9 @@
                     "host": "Hôte",
                     "port": "Port",
                     "interval": "Intervalle de mise à jour en (s)",
-                    "advanced": "Active le support en écriture et permet de définir des limites d'écriture"
+                    "advanced": "Active le support en écriture et permet de définir des limites d'écriture",
+                    "tcp_keepalive": "Activer le TCP keepalive (défaut : désactivé)",
+                    "modbus_retries": "Nouvelles tentatives Modbus après erreur de transport (défaut : 1)"
                 }
             },
             "advanced": {
@@ -49,6 +51,15 @@
                     "number_of_phases": "La configuration de phase de votre système",
                     "use_sliders": "Utilise des curseurs gradués pour les entités numériques modifiables",
                     "advanced": "Basculer en mode lecture seule si décoché (lors de l'envoi)"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Avancé : paramètres Modbus TCP",
+                        "data": {
+                            "tcp_keepalive": "Activer le TCP keepalive (défaut : désactivé)",
+                            "modbus_retries": "Nouvelles tentatives Modbus après erreur de transport (défaut : 1)"
+                        }
+                    }
                 }
             },
             "init_read": {
@@ -56,6 +67,15 @@
                     "rescan": "Rescanner les appareils disponibles. Cela rescannera tous les appareils disponibles",
                     "interval": "Intervalle de mise à jour en (s)",
                     "advanced": "Activer le support en écriture"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Avancé : paramètres Modbus TCP",
+                        "data": {
+                            "tcp_keepalive": "Activer le TCP keepalive (défaut : désactivé)",
+                            "modbus_retries": "Nouvelles tentatives Modbus après erreur de transport (défaut : 1)"
+                        }
+                    }
                 }
             },
             "advanced": {

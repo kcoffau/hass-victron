@@ -15,7 +15,9 @@
                     "host": "Host",
                     "port": "Port",
                     "interval": "Aktualisierungsintervall in (s)",
-                    "advanced": "Aktiviert Schreibunterstützung und ermöglicht das Setzen von Schreibgrenzen"
+                    "advanced": "Aktiviert Schreibunterstützung und ermöglicht das Setzen von Schreibgrenzen",
+                    "tcp_keepalive": "TCP-Keepalive aktivieren (Standard: aus)",
+                    "modbus_retries": "Modbus-Wiederholungen nach Transportfehler (Standard: 1)"
                 }
             },
             "advanced": {
@@ -49,6 +51,15 @@
                     "number_of_phases": "Die Phasenkonfiguration Ihres Systems",
                     "use_sliders": "Verwendet abgestufte Schieberegler für beschreibbare Zahlenwerte",
                     "advanced": "Wechselt in den Nur-Lesen-Modus, wenn nicht markiert (beim Absenden)"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Erweitert: Modbus-TCP-Einstellungen",
+                        "data": {
+                            "tcp_keepalive": "TCP-Keepalive aktivieren (Standard: aus)",
+                            "modbus_retries": "Modbus-Wiederholungen nach Transportfehler (Standard: 1)"
+                        }
+                    }
                 }
             },
             "init_read": {
@@ -56,6 +67,15 @@
                     "rescan": "Verfügbare Geräte erneut scannen. Dadurch werden alle verfügbaren Geräte erneut gescannt",
                     "interval": "Aktualisierungsintervall in (s)",
                     "advanced": "Schreibunterstützung aktivieren"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Erweitert: Modbus-TCP-Einstellungen",
+                        "data": {
+                            "tcp_keepalive": "TCP-Keepalive aktivieren (Standard: aus)",
+                            "modbus_retries": "Modbus-Wiederholungen nach Transportfehler (Standard: 1)"
+                        }
+                    }
                 }
             },
             "advanced": {

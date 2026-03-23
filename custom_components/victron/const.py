@@ -47,6 +47,12 @@ CONF_DC_SYSTEM_VOLTAGE = "dc_voltage"
 CONF_AC_SYSTEM_VOLTAGE = "ac_voltage"
 CONF_NUMBER_OF_PHASES = "number_of_phases"
 CONF_USE_SLIDERS = "use_sliders"
+CONF_TCP_KEEPALIVE = "tcp_keepalive"
+CONF_MODBUS_RETRIES = "modbus_retries"
+# Options flow section key (matches translations options.step.*.sections.modbus_tcp)
+SECTION_MODBUS_TCP = "modbus_tcp"
+
+DEFAULT_MODBUS_RETRIES = 1
 
 AC_VOLTAGES = {
     "US (120)": 120,

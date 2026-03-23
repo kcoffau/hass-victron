@@ -15,7 +15,9 @@
                     "host": "Värd",
                     "port": "Port",
                     "interval": "Uppdateringsintervall i (s)",
-                    "advanced": "Aktiverar skrivstöd och möjliggör inställning av skrivgränser"
+                    "advanced": "Aktiverar skrivstöd och möjliggör inställning av skrivgränser",
+                    "tcp_keepalive": "Aktivera TCP keepalive (standard: av)",
+                    "modbus_retries": "Modbus-försök efter transportfel (standard: 1)"
                 }
             },
             "advanced": {
@@ -49,6 +51,15 @@
                     "number_of_phases": "Faskonfigurationen i ditt system",
                     "use_sliders": "Använder stegade reglage för skrivbara numeriska värden",
                     "advanced": "Växla till skrivskyddat läge om det inte är markerat (vid insändning)"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Avancerat: Modbus TCP-inställningar",
+                        "data": {
+                            "tcp_keepalive": "Aktivera TCP keepalive (standard: av)",
+                            "modbus_retries": "Modbus-försök efter transportfel (standard: 1)"
+                        }
+                    }
                 }
             },
             "init_read": {
@@ -56,6 +67,15 @@
                     "rescan": "Skanna om tillgängliga enheter. Detta kommer att skanna om alla tillgängliga enheter",
                     "interval": "Uppdateringsintervall i (s)",
                     "advanced": "Aktivera skrivstöd"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Avancerat: Modbus TCP-inställningar",
+                        "data": {
+                            "tcp_keepalive": "Aktivera TCP keepalive (standard: av)",
+                            "modbus_retries": "Modbus-försök efter transportfel (standard: 1)"
+                        }
+                    }
                 }
             },
             "advanced": {

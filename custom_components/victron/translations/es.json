@@ -15,7 +15,9 @@
                     "host": "Host",
                     "port": "Puerto",
                     "interval": "Intervalo de actualización en (s)",
-                    "advanced": "Habilita el soporte de escritura y permite establecer límites de escritura"
+                    "advanced": "Habilita el soporte de escritura y permite establecer límites de escritura",
+                    "tcp_keepalive": "Activar TCP keepalive (predeterminado: desactivado)",
+                    "modbus_retries": "Reintentos Modbus tras error de transporte (predeterminado: 1)"
                 }
             },
             "advanced": {
@@ -49,6 +51,15 @@
                     "number_of_phases": "La configuración de fases de tu sistema",
                     "use_sliders": "Usar controles deslizantes escalonados para entidades numéricas editables",
                     "advanced": "Cambiar al modo solo lectura si no está seleccionado (al enviar)"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Avanzado: ajustes Modbus TCP",
+                        "data": {
+                            "tcp_keepalive": "Activar TCP keepalive (predeterminado: desactivado)",
+                            "modbus_retries": "Reintentos Modbus tras error de transporte (predeterminado: 1)"
+                        }
+                    }
                 }
             },
             "init_read": {
@@ -56,6 +67,15 @@
                     "rescan": "Reescanear dispositivos disponibles. Esto reescaneará todos los dispositivos disponibles",
                     "interval": "Intervalo de actualización en (s)",
                     "advanced": "Habilitar soporte de escritura"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Avanzado: ajustes Modbus TCP",
+                        "data": {
+                            "tcp_keepalive": "Activar TCP keepalive (predeterminado: desactivado)",
+                            "modbus_retries": "Reintentos Modbus tras error de transporte (predeterminado: 1)"
+                        }
+                    }
                 }
             },
             "advanced": {

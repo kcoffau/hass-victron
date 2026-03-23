@@ -15,7 +15,9 @@
                     "host": "Host",
                     "port": "Poort",
                     "interval": "Update-interval in (s)",
-                    "advanced": "Schakelt schrijfondersteuning in en maakt het instellen van schrijfbeperkingen mogelijk"
+                    "advanced": "Schakelt schrijfondersteuning in en maakt het instellen van schrijfbeperkingen mogelijk",
+                    "tcp_keepalive": "TCP keepalive inschakelen (standaard: uit)",
+                    "modbus_retries": "Modbus-pogingen na transportfout (standaard: 1)"
                 }
             },
             "advanced": {
@@ -49,6 +51,15 @@
                     "number_of_phases": "De faseconfiguratie van uw systeem",
                     "use_sliders": "Gebruik trapsgewijze schuifregelaars voor beschrijfbare numerieke eenheden",
                     "advanced": "Schakel over naar alleen-lezen modus als uitgeschakeld (bij indienen)"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Geavanceerd: Modbus TCP-instellingen",
+                        "data": {
+                            "tcp_keepalive": "TCP keepalive inschakelen (standaard: uit)",
+                            "modbus_retries": "Modbus-pogingen na transportfout (standaard: 1)"
+                        }
+                    }
                 }
             },
             "init_read": {
@@ -56,6 +67,15 @@
                     "rescan": "Beschikbare apparaten opnieuw scannen. Dit scant alle beschikbare apparaten opnieuw",
                     "interval": "Update-interval in (s)",
                     "advanced": "Schrijfondersteuning inschakelen"
+                },
+                "sections": {
+                    "modbus_tcp": {
+                        "name": "Geavanceerd: Modbus TCP-instellingen",
+                        "data": {
+                            "tcp_keepalive": "TCP keepalive inschakelen (standaard: uit)",
+                            "modbus_retries": "Modbus-pogingen na transportfout (standaard: 1)"
+                        }
+                    }
                 }
             },
             "advanced": {
