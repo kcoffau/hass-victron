@@ -731,7 +731,7 @@ vebus_registers_4 = {
         230, UINT16, 1, entityType=ButtonWriteType()
     ),
     "vebus_microgrid_error": RegisterInfo(
-        231, UINT16, TextReadEntityType(microgrid_error)
+        231, UINT16, entityType=TextReadEntityType(microgrid_error)
     ),
 }
 
